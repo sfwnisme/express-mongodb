@@ -11,6 +11,8 @@ const createCourseValidation = () => {
     body('price')
       .notEmpty()
       .withMessage('price is required')
+      .isNumeric()
+      .withMessage("the price should be a number")
   ]
 }
 
