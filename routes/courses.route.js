@@ -1,6 +1,4 @@
 const express = require('express');
-const app = express();
-const { body } = require('express-validator');
 const router = express.Router()
 const controllers = require('../controllers/courses.controller')
 const createCourseValidation = require('../middlewares/validationSchema')
