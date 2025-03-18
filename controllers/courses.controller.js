@@ -11,18 +11,31 @@ const getAllCourses = asyncWrapper(
     const query = req.query
     const page = +query.page || 1;
     const limit = +query.limit || 2;
-    const skip = (page - 1) * limit;
     const totalCourses = await Course.countDocuments();
     const totalPages = Math.ceil(totalCourses / limit);
+    const excuteAvailablePage = page > totalPages ? totalPages : page
+    const skip = (excuteAvailablePage - 1) * limit;
     const allCourses = await Course.find({}, { "__v": false }).limit(limit).skip(skip)
     if (!allCourses) {
       appError.create(404, httpStatusText.FAIL, 'no courses found')
       return next(appError)
     }
+    // const
+    if (page > totalPages) {
+      appError.create(400, httpStatusText.FAIL, `you are trying to access page number ${page} which is higher than you have ${totalPages}`)
+      return next(appError)
+    }
     return res.status(200).json(
       utils.returnedResponse(
         httpStatusText.SUCCESS,
-        { totalCourses, totalPages, courses: allCourses }
+        {
+          totalCourses,
+          totalPages,
+          currentPage: excuteAvailablePage,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+          courses: allCourses,
+        }
       ))
   })
 

@@ -44,8 +44,12 @@ app.use((error, req, res, next) => {
     returnedResponse(
       error.statusText || httpStatusText.ERROR,
       error.data || null,
-      !objectIdError ? error : "The Id is not valid"
+      error.message
+      // !objectIdError ? error : "The Id is not valid"
     ))
+  // res.status(error.statusCode || 500).json(
+  //   {status: error.statusText || httpStatusText.ERROR, message: error.message, code: error.statuscode || 500, data: null}
+  // )
 })
 
 app.listen(port, () => { console.log('listened') })

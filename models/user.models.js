@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const validator = require('validatorjs');
+const validator = require('validator');
 
 const userSchema = new mongoose.Schema({
   firstName: {
@@ -14,10 +14,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "email is required"],
     unique: true,
-    // validate: [validator.isEmail, "field must be a valid email"],
+    validate: [validator.isEmail, "field must be a valid email"],
     // validate: {
     //   validator: (val) => {
-    //     return validator.email(val);
+    //     const validation = new validator({ email: val }, { email: "required|email" });
+    //     return validation.passes();
+    //     // return validator.email(val);
     //   },
     //   message: "field must be a valid email",
     // }
@@ -25,6 +27,9 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
+  },
+  token: {
+    type: String
   }
 })
 // Apply the uniqueValidator plugin
