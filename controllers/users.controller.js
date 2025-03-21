@@ -6,7 +6,10 @@ const asyncWrapper = require('../middlewares/asyncWrapper.js')
 const { request } = require('express')
 const courseModels = require('../models/course.models.js')
 const generateJWT = require('../utils/generateJWT.js')
+const createPasswordHasher = require('../utils/createPasswordHasher.js')
 const appError = new utils.AppError()
+
+const hashPassword = createPasswordHasher(10)
 
 const getAllUsers = asyncWrapper(
   async (req, res, next) => {
@@ -48,14 +51,14 @@ const register = asyncWrapper(
       return next(appError)
     }
 
-    const hashedPassword = await bcrypt.hash(req.body.password, 10)
+    const hashedPassword = await hashPassword(req.body.password)
 
     const newUser = new User({ ...req.body, password: hashedPassword }, { '__v': false });
-    const token = await generateJWT({ email: newUser.email, id: newUser._id })
-    newUser.token = token
+    const token = await generateJWT({ email: newUser.email, id: newUser._id, role: newUser.role })
+    const newUserWithToken = { data: newUser, token }
     console.log(newUser)
     await newUser.save();
-    return res.status(201).json(utils.returnedResponse(httpStatusText.SUCCESS, newUser));
+    return res.status(201).json(utils.returnedResponse(httpStatusText.SUCCESS, newUserWithToken));
   })
 
 const login = asyncWrapper(
@@ -86,24 +89,34 @@ const login = asyncWrapper(
       return next(appError)
     }
     if (isPasswordMatch && user) {
-      const token = await generateJWT({ email: user.email, id: user._id })
-      user.token = token
-      return res.status(200).json(utils.returnedResponse(200, { email: user.email, firstName: user.firstName, token }, "logged in successfully"))
+      const token = await generateJWT({ email: user.email, id: user._id, role: user.role })
+      const userWithToken = { data: user, token: token }
+      // user.token = token
+      return res.status(200).json(utils.returnedResponse(200, userWithToken, "logged in successfully"))
     }
     // return res.status(200).json(utils.returnedResponse(httpStatusText.SUCCESS, user, "success"))
   })
 
 const updateUser = asyncWrapper(
   async (req, res, next) => {
-    const { body, params: { userId } } = req;
+    let { body, params: { userId } } = req;
     const user = await User.findById(userId);
 
     if (!user) {
       appError.create(400, httpStatusText.FAIL, "user not found")
       return next(appError)
     }
-    const hashedPassword = await bcrypt.hash(body.password, 10)
-    const updatedUser = await User.updateOne({ _id: userId }, { ...body, password: hashedPassword })
+
+    let updatedFields = { ...body }
+    if (body.password) {
+
+      // updatedFields.password = await bcrypt.hash(body.password, 10)
+      updatedFields.password = await hashPassword(body.password)
+    }
+
+    console.log(updatedFields)
+
+    const updatedUser = await User.updateOne({ _id: userId }, { ...updatedFields })
     const isUpdated = updatedUser.modifiedCount > 0
     return res.status(200).json(
       utils

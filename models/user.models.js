@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const validator = require('validator');
+const { userRoles } = require("../utils/userRoles");
 
 const userSchema = new mongoose.Schema({
   firstName: {
@@ -28,8 +29,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  token: {
-    type: String
+  // token: {
+  //   type: String
+  // },
+  role: {
+    type: String,
+    default: userRoles.USER
   }
 })
 // Apply the uniqueValidator plugin

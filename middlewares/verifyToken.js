@@ -12,7 +12,9 @@ module.exports = (req, res, next) => {
   const token = authHeader.split(' ')[1]
   console.log(token)
   try {
-    jwt.verify(token, process.env.JWT_SECRET_KEY)
+    const verifiedToken = jwt.verify(token, process.env.JWT_SECRET_KEY)
+    // attach the verified user object to the request body
+    req.body.user = verifiedToken
     next()
   } catch (error) {
     appError.create(401, httpStatusText.ERROR, 'unauthorized, token is not valid')
